@@ -1,4 +1,4 @@
 streamlit
 google-genai
 python-dotenv
-pyttsx3
+google-cloud-texttospeech
