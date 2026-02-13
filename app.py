@@ -49,7 +49,6 @@ if os.path.exists(avatar_file):
         img_b64 = base64.b64encode(f.read()).decode()
 
 # --- ECLIPSE CSS: NUCLEAR THEME OVERRIDE [cite: 2026-02-13] ---
-# Note: We use !important on every line to prevent the Cloud server from stripping your colors [cite: 2026-02-13].
 st.markdown(f"""
     <style>
     header, footer {{ visibility: hidden !important; }}
@@ -60,30 +59,29 @@ st.markdown(f"""
     .fixed-header {{
         position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
         background: linear-gradient(to bottom, {bg_base} 0%, rgba(0,0,0,0) 100%) !important;
-        backdrop-filter: blur(8px); padding: 20px; text-align: center;
+        backdrop-filter: blur(8px); padding: 40px 10px; text-align: center;
     }}
-    .hud-image {{ width: 260px; margin: 10px auto; display: block; filter: drop-shadow(0 0 20px {accent}66); }}
-    .chat-container {{ margin-top: 450px; padding: 20px; }}
+    .hud-image {{ width: 280px; margin: 20px auto; display: block; filter: drop-shadow(0 0 30px {accent}88); }}
+    .chat-container {{ margin-top: 500px; padding: 20px; }}
     </style>
     
     <div class="fixed-header">
-        <div style="color: {accent}; font-family: monospace; font-size: 0.8rem; letter-spacing: 2px;">NEBULA STATUS | {int(xp)} XP</div>
+        <div style="color: {accent} !important; font-family: monospace; font-size: 1rem; font-weight: bold; letter-spacing: 3px;">NEBULA STATUS | {int(xp)} XP</div>
         <img src="data:image/png;base64,{img_b64}" class="hud-image">
-        <div style="color: #b39ddb; font-style: italic; font-size: 0.9rem;">✨ {st.session_state.current_mood_text}</div>
+        <div style="color: #d1c4e9; font-style: italic; font-size: 1.1rem; margin-top: 10px;">✨ {st.session_state.current_mood_text}</div>
     </div>
     <div class="chat-container">
     """, unsafe_allow_html=True)
 
 # --- SECTION 4: RESONANCE JOURNAL (CHAT) [cite: 2026-02-13] ---
 for msg in st.session_state.chat_history[-10:]:
-    role_name = "assistant" if msg["role"] == "model" else "user"
-    with st.chat_message(role_name): 
+    with st.chat_message("assistant" if msg["role"] == "model" else "user"): 
         st.markdown(msg["parts"][0]["text"])
 
 # Signal Processing
 if prompt := st.chat_input("Signal Nebula..."):
     st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
-    persona = "You are Nebula, a cosmic companion. Your steward is Cazz. Be warm and brief. Never mention stats."
+    persona = "You are Nebula, a cosmic companion. Be warm and brief. Never mention stats."
     
     try:
         response = client.models.generate_content(
@@ -105,7 +103,7 @@ if prompt := st.chat_input("Signal Nebula..."):
     except Exception as e: 
         st.error(f"Neural Link Severed: {e}")
 
-# Audio Protocol
+# Audio Protocol Injection [cite: 2026-02-13]
 if st.session_state.last_audio_b64 and not st.session_state.audio_played:
     st.markdown(f'<audio autoplay="true"><source src="data:audio/mp3;base64,{st.session_state.last_audio_b64}" type="audio/mp3"></audio>', unsafe_allow_html=True)
     st.session_state.audio_played = True
