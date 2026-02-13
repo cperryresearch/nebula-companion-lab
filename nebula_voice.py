@@ -7,7 +7,15 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "nebula-ai-companion-101e8593f300
 
 class NebulaVoice:
     def __init__(self):
-        self.offline_engine = pyttsx3.init()
+        # --- THE HARDWARE SHIELD ---
+        # Logic: Attempt to start the offline engine. If no sound hardware is found (Cloud), 
+        # the app skips this instead of crashing [cite: 2026-02-13].
+        try:
+            self.offline_engine = pyttsx3.init()
+            self.offline_available = True
+        except Exception:
+            self.offline_available = False
+        
         try:
             self.cloud_client = texttospeech.TextToSpeechClient()
             self.cloud_available = True
@@ -50,5 +58,10 @@ class NebulaVoice:
             out.write(response.audio_content)
 
     def _speak_offline(self, text):
-        self.offline_engine.say(text)
-        self.offline_engine.runAndWait()
+        # Logic: Only execute if hardware was successfully initialized
+        if self.offline_available:
+            try:
+                self.offline_engine.say(text)
+                self.offline_engine.runAndWait()
+            except:
+                pass
