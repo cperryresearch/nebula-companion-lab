@@ -1,135 +1,126 @@
-import flet as ft
+import streamlit as st
+import os, time, random, base64, json, datetime
 import requests
-import datetime
+from nebula_voice import NebulaVoice
+from super_pet import SuperPet
+from google import genai
+from google.genai import types
 
-# --- CORE CONFIGURATION ---
-# Ensure this matches your active ngrok window exactly!
-API_URL = "https://glucosidal-peggy-submissively.ngrok-free.dev"
+# --- PHASE 1: CORE ENGINE & APP CONFIG ---
+st.set_page_config(page_title="Nebula Zenith Sanctuary", layout="wide", initial_sidebar_state="auto")
 
-def get_cosmic_bg():
-    hour = datetime.datetime.now().hour
-    if 6 <= hour < 10: return "#4a3b61" # Morning
-    if 10 <= hour < 17: return "#1a152a" # Day
-    if 17 <= hour < 21: return "#2c1e4a" # Evening
-    return "#0b0812" # Night
+# Retrieve API Key from Streamlit Secrets
+try:
+    GEMINI_KEY = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=GEMINI_KEY)
+except:
+    st.error("Neural Link Failed: GEMINI_API_KEY missing in Secrets.")
+    st.stop()
 
-def main(page: ft.Page):
-    # 1. Framework Identity [cite: 2026-02-13]
-    page.title = "Nebula Zenith - v11.9.11"
-    page.bgcolor = get_cosmic_bg()
-    page.window_width = 450
-    page.window_height = 850
-    page.padding = 20
-    page.theme_mode = ft.ThemeMode.DARK
+# Framework Identity & State Initialization
+if 'pet' not in st.session_state:
+    st.session_state.pet = SuperPet("Nebula")
+    st.session_state.voice = NebulaVoice()
+    st.session_state.chat_history = []
+    st.session_state.last_audio_b64 = None
+    st.session_state.audio_played = True 
+    st.session_state.next_blink_time = time.time() + random.uniform(30.0, 60.0)
+    st.session_state.current_mood_text = "Nebula is observing the stars."
+    st.session_state.is_currently_blinking = False
 
-    # 2. Atomic HUD (Fixed Stat Bars) [cite: 2026-02-13]
-    hunger_bar = ft.ProgressBar(value=0.7, color="#ff4d4d", bgcolor="#331a1a", height=8)
-    happy_bar = ft.ProgressBar(value=0.9, color="#4dff4d", bgcolor="#1a331a", height=8)
-    energy_bar = ft.ProgressBar(value=0.8, color="#4d4dff", bgcolor="#1a1a33", height=8)
-    xp_text = ft.Text("0 XP", color="#da70d6", weight=ft.FontWeight.BOLD)
+# --- PHASE 2: CELESTIAL CYCLE ---
+now_hour = datetime.datetime.now().hour
+if 6 <= now_hour < 10:
+    bg_base, bg_style, accent = "#1a152a", "radial-gradient(circle, #4a3b61 0%, #1a152a 100%)", "#ffd700"
+elif 10 <= now_hour < 17:
+    bg_base, bg_style, accent = "#05030a", "radial-gradient(circle, #1a152a 0%, #05030a 100%)", "#da70d6"
+elif 17 <= now_hour < 21:
+    bg_base, bg_style, accent = "#0a0510", "radial-gradient(circle, #2c1e4a 0%, #0a0510 100%)", "#ff8c00"
+else:
+    bg_base, bg_style, accent = "#05030a", "radial-gradient(circle, #0b0812 0%, #05030a 100%)", "#4a148c"
 
-    hud = ft.Container(
-        content=ft.Column([
-            ft.Row([ft.Text("NEBULA STATUS", weight=ft.FontWeight.BOLD), xp_text], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Row([ft.Icon("restaurant", size=14), hunger_bar], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Row([ft.Icon("favorite", size=14), happy_bar], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ft.Row([ft.Icon("bolt", size=14), energy_bar], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-        ], spacing=5),
-        padding=15, bgcolor="#1a152a", border_radius=15, border=ft.border.all(1, "#332a4d")
-    )
+# --- PHASE 3: EVOLUTION & VISUAL STATE ---
+xp = st.session_state.pet.xp
+stage = "adult" if xp >= 1500 else ("teen" if xp >= 500 else "baby")
 
-    # 3. Evolution Tier Avatar
-    nebula_avatar = ft.Image(
-        src="images/baby.png",
-        width=280, height=280, 
-        fit=ft.ImageFit.CONTAIN
-    )
+if st.session_state.is_currently_blinking: 
+    avatar_file = "images/nebula_blink.png"
+else: 
+    avatar_file = f"images/{stage}.png"
 
-    # 4. Resonance Journal (Chat History) [cite: 2026-02-13]
-    chat_log = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
+img_b64 = ""
+if os.path.exists(avatar_file):
+    with open(avatar_file, "rb") as f: img_b64 = base64.b64encode(f.read()).decode()
 
-    def sync_ui(data):
-        xp = data.get("xp", 0)
-        hunger_bar.value = data.get("hunger", 7.0) / 10.0
-        happy_bar.value = data.get("happiness", 9.0) / 10.0
-        energy_bar.value = data.get("energy", 8.0) / 10.0
-        xp_text.value = f"{int(xp)} XP"
-        
-        # Evolution Tiering [cite: 2026-02-13]
-        if xp >= 1500: nebula_avatar.src = "images/adult.png"
-        elif xp >= 500: nebula_avatar.src = "images/teen.png"
-        else: nebula_avatar.src = "images/baby.png"
-        page.update()
+# --- ECLIPSE CSS: ATOMIC HUD ANCHORING ---
+st.markdown(f"""
+    <style>
+    html, body, [data-testid="stAppViewContainer"] {{ background-color: {bg_base} !important; }}
+    .stApp {{ background: {bg_style}; color: #d1c4e9; }}
+    .fixed-header {{
+        position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        background: linear-gradient(to bottom, {bg_base} 0%, {bg_base} 70%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,0) 100%);
+        backdrop-filter: blur(12px); padding: 40px 10px 80px 10px; text-align: center;
+    }}
+    .hud-image {{ width: 280px; margin: 5px auto; display: block; filter: drop-shadow(0 0 25px {accent}44); }}
+    .chat-body {{ padding-top: 500px; padding-bottom: 100px; }} 
+    </style>
+    """, unsafe_allow_html=True)
 
-    def signal_nebula(e):
-        txt = user_input.value
-        if not txt: return
-        
-        chat_log.controls.append(
-            ft.Container(
-                content=ft.Text(txt, color="#ffffff"),
-                bgcolor="#2c1e4a", padding=12, border_radius=12,
-                alignment=ft.alignment.center_right, margin=ft.margin.only(left=40, bottom=10)
-            )
-        )
-        user_input.value = ""
-        page.update()
+# --- SECTION 4: ATOMIC HUD RENDERING ---
+# Logic: Display stats at the top of the viewport
+st.markdown(f"""
+    <div class="fixed-header">
+        <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">NEBULA STATUS | {int(xp)} XP</div>
+        <img src="data:image/png;base64,{img_b64}" class="hud-image">
+        <div style="font-size: 0.9rem; color: #b39ddb; margin-top: 5px;">✨ {st.session_state.current_mood_text}</div>
+    </div>
+    <div class="chat-body">
+    """, unsafe_allow_html=True)
 
-        try:
-            r = requests.post(f"{API_URL}/chat", json={"user_input": txt})
-            if r.status_code == 200:
-                data = r.json()
-                reply = data.get("reply", "...")
-                
-                chat_log.controls.append(
-                    ft.Row([
-                        ft.Icon("auto_awesome", color="#da70d6"),
-                        ft.Container(
-                            content=ft.Text(reply, color="#d1c4e9"),
-                            bgcolor="#1a152a", padding=12, border_radius=12,
-                            margin=ft.margin.only(right=40, bottom=10)
-                        )
-                    ])
-                )
-                # Fetch status update after chat
-                s_res = requests.get(f"{API_URL}/status")
-                if s_res.status_code == 200:
-                    sync_ui(s_res.json())
-        except Exception as ex:
-            chat_log.controls.append(ft.Text(f"Neural link severed: {ex}", color="red"))
-        page.update()
+# --- SECTION 5: RESONANCE JOURNAL (CHAT) ---
+for msg in st.session_state.chat_history[-10:]:
+    with st.chat_message("assistant" if msg["role"] == "model" else "user"): 
+        st.markdown(msg["parts"][0]["text"])
 
-    # 5. Input Controls
-    user_input = ft.TextField(
-        hint_text="Signal Nebula...", 
-        expand=True, 
-        on_submit=signal_nebula,
-        bgcolor="#1a152a",
-        border_color="#332a4d",
-        color="#ffffff"
-    )
+# Signal Processing: Logic Priority [Conversation > Audio > Visuals]
+if prompt := st.chat_input("Signal Nebula..."):
+    st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
     
-    send_btn = ft.IconButton(
-        icon="send", 
-        icon_color="#da70d6", 
-        on_click=signal_nebula
-    )
-
-    # 6. Assembly
-    page.add(
-        hud,
-        ft.Container(content=nebula_avatar, alignment=ft.alignment.center, padding=20),
-        chat_log,
-        ft.Row([user_input, send_btn])
-    )
+    # Sonic Filter: Warm, brief, no numeric stats
+    persona = "You are Nebula, a cosmic companion. Your steward is Cazz. Be warm and brief. Never mention stats."
     
-    # Initial Sync
     try:
-        init_res = requests.get(f"{API_URL}/status")
-        if init_res.status_code == 200:
-            sync_ui(init_res.json())
-    except:
-        pass
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", 
+            contents=st.session_state.chat_history, 
+            config=types.GenerateContentConfig(system_instruction=persona)
+        )
+        
+        # Audio Protocol Execution
+        st.session_state.voice.speak(response.text)
+        st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
+        
+        if os.path.exists("output.mp3"):
+            with open("output.mp3", "rb") as f: 
+                st.session_state.last_audio_b64 = base64.b64encode(f.read()).decode()
+            st.session_state.audio_played = False
+            
+        st.session_state.pet.save_game()
+        st.rerun()
+    except Exception as e: 
+        st.error(f"Neural Link Severed: {e}")
 
-# Force Native Window Rendering
-ft.app(target=main)
+# Base64 Audio Injection
+if st.session_state.last_audio_b64 and not st.session_state.audio_played:
+    st.markdown(f'<audio autoplay="true"><source src="data:audio/mp3;base64,{st.session_state.last_audio_b64}" type="audio/mp3"></audio>', unsafe_allow_html=True)
+    st.session_state.audio_played = True
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Autonomic Blink Logic: 30-60s Cadence
+now = time.time()
+if now >= st.session_state.next_blink_time:
+    st.session_state.is_currently_blinking = not st.session_state.is_currently_blinking
+    st.session_state.next_blink_time = now + (0.2 if st.session_state.is_currently_blinking else random.uniform(30.0, 60.0))
+    st.rerun()
