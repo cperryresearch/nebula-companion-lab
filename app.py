@@ -1,6 +1,5 @@
 import streamlit as st
 import os, time, random, base64, json, datetime
-import requests
 from nebula_voice import NebulaVoice
 from super_pet import SuperPet
 from google import genai
@@ -17,7 +16,7 @@ except:
     st.error("Neural Link Failed: GEMINI_API_KEY missing in Secrets.")
     st.stop()
 
-# Framework Identity & State Initialization
+# Framework Identity & State Initialization [cite: 2026-02-13]
 if 'pet' not in st.session_state:
     st.session_state.pet = SuperPet("Nebula")
     st.session_state.voice = NebulaVoice()
@@ -28,7 +27,7 @@ if 'pet' not in st.session_state:
     st.session_state.current_mood_text = "Nebula is observing the stars."
     st.session_state.is_currently_blinking = False
 
-# --- PHASE 2: CELESTIAL CYCLE ---
+# --- PHASE 2: CELESTIAL CYCLE [cite: 2026-02-13] ---
 now_hour = datetime.datetime.now().hour
 if 6 <= now_hour < 10:
     bg_base, bg_style, accent = "#1a152a", "radial-gradient(circle, #4a3b61 0%, #1a152a 100%)", "#ffd700"
@@ -39,7 +38,7 @@ elif 17 <= now_hour < 21:
 else:
     bg_base, bg_style, accent = "#05030a", "radial-gradient(circle, #0b0812 0%, #05030a 100%)", "#4a148c"
 
-# --- PHASE 3: EVOLUTION & VISUAL STATE ---
+# --- PHASE 3: EVOLUTION & VISUAL STATE [cite: 2026-02-13] ---
 xp = st.session_state.pet.xp
 stage = "adult" if xp >= 1500 else ("teen" if xp >= 500 else "baby")
 
@@ -50,9 +49,10 @@ else:
 
 img_b64 = ""
 if os.path.exists(avatar_file):
-    with open(avatar_file, "rb") as f: img_b64 = base64.b64encode(f.read()).decode()
+    with open(avatar_file, "rb") as f: 
+        img_b64 = base64.b64encode(f.read()).decode()
 
-# --- ECLIPSE CSS: ATOMIC HUD ANCHORING ---
+# --- ECLIPSE CSS: ATOMIC HUD ANCHORING [cite: 2026-02-13] ---
 st.markdown(f"""
     <style>
     html, body, [data-testid="stAppViewContainer"] {{ background-color: {bg_base} !important; }}
@@ -67,8 +67,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- SECTION 4: ATOMIC HUD RENDERING ---
-# Logic: Display stats at the top of the viewport
+# --- SECTION 4: ATOMIC HUD RENDERING [cite: 2026-02-13] ---
 st.markdown(f"""
     <div class="fixed-header">
         <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">NEBULA STATUS | {int(xp)} XP</div>
@@ -78,7 +77,7 @@ st.markdown(f"""
     <div class="chat-body">
     """, unsafe_allow_html=True)
 
-# --- SECTION 5: RESONANCE JOURNAL (CHAT) ---
+# --- SECTION 5: RESONANCE JOURNAL (CHAT) [cite: 2026-02-13] ---
 for msg in st.session_state.chat_history[-10:]:
     with st.chat_message("assistant" if msg["role"] == "model" else "user"): 
         st.markdown(msg["parts"][0]["text"])
@@ -87,7 +86,7 @@ for msg in st.session_state.chat_history[-10:]:
 if prompt := st.chat_input("Signal Nebula..."):
     st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
     
-    # Sonic Filter: Warm, brief, no numeric stats
+    # Sonic Filter: Warm, brief, no numeric stats [cite: 2026-02-13]
     persona = "You are Nebula, a cosmic companion. Your steward is Cazz. Be warm and brief. Never mention stats."
     
     try:
@@ -97,7 +96,7 @@ if prompt := st.chat_input("Signal Nebula..."):
             config=types.GenerateContentConfig(system_instruction=persona)
         )
         
-        # Audio Protocol Execution
+        # Audio Protocol Execution [cite: 2026-02-13]
         st.session_state.voice.speak(response.text)
         st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
         
@@ -106,19 +105,21 @@ if prompt := st.chat_input("Signal Nebula..."):
                 st.session_state.last_audio_b64 = base64.b64encode(f.read()).decode()
             st.session_state.audio_played = False
             
+        # XP Gain: Golden Ratio [cite: 2026-02-13]
+        st.session_state.pet.xp += 20
         st.session_state.pet.save_game()
         st.rerun()
     except Exception as e: 
         st.error(f"Neural Link Severed: {e}")
 
-# Base64 Audio Injection
+# Base64 Audio Injection [cite: 2026-02-13]
 if st.session_state.last_audio_b64 and not st.session_state.audio_played:
     st.markdown(f'<audio autoplay="true"><source src="data:audio/mp3;base64,{st.session_state.last_audio_b64}" type="audio/mp3"></audio>', unsafe_allow_html=True)
     st.session_state.audio_played = True
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Autonomic Blink Logic: 30-60s Cadence
+# Autonomic Blink Logic: 30-60s Cadence [cite: 2026-02-13]
 now = time.time()
 if now >= st.session_state.next_blink_time:
     st.session_state.is_currently_blinking = not st.session_state.is_currently_blinking
