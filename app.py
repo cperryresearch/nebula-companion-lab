@@ -86,7 +86,6 @@ for msg in st.session_state.chat_history[-10:]:
 if prompt := st.chat_input("Signal Nebula..."):
     st.session_state.chat_history.append({"role": "user", "parts": [{"text": prompt}]})
     
-    # Sonic Filter: Warm, brief, no numeric stats [cite: 2026-02-13]
     persona = "You are Nebula, a cosmic companion. Your steward is Cazz. Be warm and brief. Never mention stats."
     
     try:
@@ -96,7 +95,6 @@ if prompt := st.chat_input("Signal Nebula..."):
             config=types.GenerateContentConfig(system_instruction=persona)
         )
         
-        # Audio Protocol Execution [cite: 2026-02-13]
         st.session_state.voice.speak(response.text)
         st.session_state.chat_history.append({"role": "model", "parts": [{"text": response.text}]})
         
@@ -105,7 +103,7 @@ if prompt := st.chat_input("Signal Nebula..."):
                 st.session_state.last_audio_b64 = base64.b64encode(f.read()).decode()
             st.session_state.audio_played = False
             
-        # XP Gain: Golden Ratio [cite: 2026-02-13]
+        # Economy Sync: XP increase via SuperPet [cite: 2026-02-13]
         st.session_state.pet.xp += 20
         st.session_state.pet.save_game()
         st.rerun()
