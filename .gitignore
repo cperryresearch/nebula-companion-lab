@@ -1,20 +1,30 @@
-# --- Nebula Specific Exclusions ---
-
-# API Keys and Environment Variables
 .env
+nebula-ai-companion-*.json
 
-# Local Persistence and Save States
-# These are ignored to ensure Vitals Stability is managed by the app logic [cite: 2026-02-13]
+# Streamlit secrets - NEVER commit these
+.streamlit/secrets.toml
+
+# Game data files (user-specific)
 nebula_data.json
+nebula_memory.json
 
-# Temporary Audio Assets
-# Prevents conflicts with the Base64 Audio Protocol injection [cite: 2026-02-13]
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Audio output
 output.mp3
 
-# --- Standard Python Exclusions ---
-__pycache__/
-*.py[cod]
-*$py.class
-.venv
-venv/
-ENV/
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
