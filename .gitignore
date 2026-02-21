@@ -1,5 +1,6 @@
 .env
 nebula-ai-companion-*.json
+nebula.log
 
 # Streamlit secrets - NEVER commit these
 .streamlit/secrets.toml
